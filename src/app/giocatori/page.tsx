@@ -5,10 +5,14 @@ import Sidebar from '@/components/Sidebar'
 import MonthFilter from '@/components/MonthFilter'
 import { supabase } from '@/lib/supabase'
 import { Fine, FineType, Player } from '@/lib/database.types'
+import { useAuth } from '@/context/AuthContext'
 
 const TEAM_ID = '00000000-0000-0000-0000-000000000001'
 
 export default function PlayersPage() {
+  const { role } = useAuth()
+  const isAdmin = role === 'admin'
+
   const [players, setPlayers] = useState<Player[]>([])
   const [fines, setFines] = useState<(Fine & { fine_type: FineType })[]>([])
   const [fineTypes, setFineTypes] = useState<FineType[]>([])
@@ -91,6 +95,7 @@ export default function PlayersPage() {
   }
 
   const togglePaid = async (id: string, current: boolean) => {
+    if (!isAdmin) return
     await supabase.from('fines').update({ is_paid: !current }).eq('id', id)
     fetchData()
   }
@@ -119,7 +124,7 @@ export default function PlayersPage() {
               <button onClick={() => setSortBy('name')} className={`px-3 py-1.5 transition-colors ${sortBy === 'name' ? 'bg-accent text-black font-semibold' : 'text-muted hover:text-white'}`}>A→Z</button>
               <button onClick={() => setSortBy('amount')} className={`px-3 py-1.5 transition-colors border-l border-border ${sortBy === 'amount' ? 'bg-accent text-black font-semibold' : 'text-muted hover:text-white'}`}>€</button>
             </div>
-            <button onClick={openAddPlayer} className={btnP}>+ Giocatore</button>
+            {isAdmin && <button onClick={openAddPlayer} className={btnP}>+ Giocatore</button>}
           </div>
         </div>
 
@@ -151,7 +156,7 @@ export default function PlayersPage() {
             <div className="flex flex-col overflow-hidden">
               <div className="font-bebas text-[18px] tracking-[2px] text-muted mb-3 flex-shrink-0 flex items-center justify-between">
                 <span>{selected ? selected.name : 'Seleziona un giocatore'}</span>
-                {selected && (
+                {selected && isAdmin && (
                   <div className="flex gap-2">
                     <button onClick={() => setShowAddFine(true)} className={btnP}>+ Multa</button>
                     <button onClick={() => openEditPlayer(selected)} className={btnS}>✏️</button>
@@ -172,7 +177,8 @@ export default function PlayersPage() {
                   if (pf.length === 0) return (
                     <div className="bg-surface border border-border rounded-xl p-10 text-center text-muted text-[13px]">
                       <div className="text-[32px] mb-2">✅</div>
-                      Nessuna multa — <button onClick={() => setShowAddFine(true)} className="text-accent underline">aggiungine una</button>
+                      Nessuna multa nel periodo selezionato
+                      {isAdmin && <> — <button onClick={() => setShowAddFine(true)} className="text-accent underline">aggiungine una</button></>}
                     </div>
                   )
                   return (
@@ -205,12 +211,20 @@ export default function PlayersPage() {
                               </div>
                             </div>
                             <div className={`font-mono text-[13px] font-medium min-w-[55px] text-right ${fine.is_paid ? 'text-success line-through opacity-60' : 'text-danger'}`}>{fmt(Number(fine.amount))}</div>
-                            <button onClick={() => togglePaid(fine.id, fine.is_paid)}
-                              className={`rounded-full relative transition-colors flex-shrink-0 ${fine.is_paid ? 'bg-success' : 'bg-border'}`}
-                              style={{ width: 32, height: 18 }}>
-                              <span className={`absolute top-[3px] w-3 h-3 rounded-full bg-white transition-all ${fine.is_paid ? 'left-[17px]' : 'left-[3px]'}`} />
-                            </button>
-                            <button onClick={() => setShowDeleteFine(fine)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-danger text-sm">🗑️</button>
+                            {isAdmin ? (
+                              <>
+                                <button onClick={() => togglePaid(fine.id, fine.is_paid)}
+                                  className={`rounded-full relative transition-colors flex-shrink-0 ${fine.is_paid ? 'bg-success' : 'bg-border'}`}
+                                  style={{ width: 32, height: 18 }}>
+                                  <span className={`absolute top-[3px] w-3 h-3 rounded-full bg-white transition-all ${fine.is_paid ? 'left-[17px]' : 'left-[3px]'}`} />
+                                </button>
+                                <button onClick={() => setShowDeleteFine(fine)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-danger text-sm">🗑️</button>
+                              </>
+                            ) : (
+                              <div className={`text-[10px] px-2 py-0.5 rounded font-medium ${fine.is_paid ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                                {fine.is_paid ? 'Saldato' : 'Da pagare'}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -223,7 +237,7 @@ export default function PlayersPage() {
         </div>
       </main>
 
-      {(showAddPlayer || showEditPlayer) && (
+      {isAdmin && (showAddPlayer || showEditPlayer) && (
         <div className={overlay} onClick={() => { setShowAddPlayer(false); setShowEditPlayer(null) }}>
           <div className={box} onClick={e => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-border">
@@ -253,7 +267,7 @@ export default function PlayersPage() {
         </div>
       )}
 
-      {showAddFine && selected && (
+      {isAdmin && showAddFine && selected && (
         <div className={overlay} onClick={() => setShowAddFine(false)}>
           <div className={box} onClick={e => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-border">
@@ -291,7 +305,7 @@ export default function PlayersPage() {
         </div>
       )}
 
-      {showDeletePlayer && (
+      {isAdmin && showDeletePlayer && (
         <div className={overlay} onClick={() => setShowDeletePlayer(null)}>
           <div className={box} onClick={e => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-border">
@@ -309,7 +323,7 @@ export default function PlayersPage() {
         </div>
       )}
 
-      {showDeleteFine && (
+      {isAdmin && showDeleteFine && (
         <div className={overlay} onClick={() => setShowDeleteFine(null)}>
           <div className={box} onClick={e => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-border">

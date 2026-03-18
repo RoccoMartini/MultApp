@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react'
 import Sidebar from '@/components/Sidebar'
 import { supabase } from '@/lib/supabase'
 import { FineType } from '@/lib/database.types'
+import { useAuth } from '@/context/AuthContext'
 
 const TEAM_ID = '00000000-0000-0000-0000-000000000001'
 const CATEGORIES = ['Presenze', 'Abbigliamento', 'Disciplina', 'Campo']
 
 export default function FineTypesPage() {
+  const { role } = useAuth()
+  const isAdmin = role === 'admin'
+
   const [fineTypes, setFineTypes] = useState<FineType[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [showEdit, setShowEdit] = useState<FineType | null>(null)
@@ -59,30 +63,32 @@ export default function FineTypesPage() {
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="px-7 py-5 border-b border-border flex items-center justify-between bg-bg">
           <div className="font-bebas text-[26px] tracking-[2px]">Tipi di Multa</div>
-          <button onClick={openAdd} className={btnP}>+ Tipo Multa</button>
+          {isAdmin && <button onClick={openAdd} className={btnP}>+ Tipo Multa</button>}
         </div>
         <div className="p-7 overflow-y-auto flex-1">
           <div className="font-bebas text-[18px] tracking-[2px] text-muted mb-4">Regolamento Multe</div>
           <div className="flex flex-col gap-3">
             {fineTypes.map((ft, i) => (
-              <div key={ft.id} className="bg-surface border border-border rounded-xl px-5 py-4 flex items-start gap-4 group hover:border-border/70 transition-colors">
+              <div key={ft.id} className="bg-surface border border-border rounded-xl px-5 py-4 flex items-start gap-4 group">
                 <div className="font-bebas text-[28px] text-accent leading-none min-w-[30px]">{i + 1}</div>
                 <div className="flex-1">
                   <div className="text-[14px] font-medium leading-snug mb-1">{ft.label}</div>
                   <div className="text-[11px] text-muted">{ft.category}</div>
                 </div>
                 <div className="font-bebas text-[28px] text-danger leading-none">€{ft.amount}</div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                  <button onClick={() => openEdit(ft)} className="w-8 h-8 rounded-lg bg-surface2 border border-border text-muted hover:text-white flex items-center justify-center text-sm transition-colors">✏️</button>
-                  <button onClick={() => setShowDelete(ft)} className="w-8 h-8 rounded-lg bg-danger/10 border border-danger/30 text-danger hover:bg-danger/20 flex items-center justify-center text-sm transition-colors">🗑️</button>
-                </div>
+                {isAdmin && (
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                    <button onClick={() => openEdit(ft)} className="w-8 h-8 rounded-lg bg-surface2 border border-border text-muted hover:text-white flex items-center justify-center text-sm transition-colors">✏️</button>
+                    <button onClick={() => setShowDelete(ft)} className="w-8 h-8 rounded-lg bg-danger/10 border border-danger/30 text-danger hover:bg-danger/20 flex items-center justify-center text-sm transition-colors">🗑️</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       </main>
 
-      {(showAdd || showEdit) && (
+      {isAdmin && (showAdd || showEdit) && (
         <div className={overlay} onClick={() => { setShowAdd(false); setShowEdit(null) }}>
           <div className={box} onClick={e => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-border">
@@ -120,7 +126,7 @@ export default function FineTypesPage() {
         </div>
       )}
 
-      {showDelete && (
+      {isAdmin && showDelete && (
         <div className={overlay} onClick={() => setShowDelete(null)}>
           <div className={box} onClick={e => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-border">
