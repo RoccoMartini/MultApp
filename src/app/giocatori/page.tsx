@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import Sidebar from '@/components/Sidebar'
 import MonthFilter from '@/components/MonthFilter'
