@@ -14,6 +14,7 @@ export default function PlayersPage() {
   const [fineTypes, setFineTypes] = useState<FineType[]>([])
   const [selected, setSelected] = useState<Player | null>(null)
   const [month, setMonth] = useState('all')
+  const [sortBy, setSortBy] = useState<'name' | 'amount'>('name')
   const [showAddPlayer, setShowAddPlayer] = useState(false)
   const [showEditPlayer, setShowEditPlayer] = useState<Player | null>(null)
   const [showAddFine, setShowAddFine] = useState(false)
@@ -41,6 +42,13 @@ export default function PlayersPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   const playerFines = (id: string) => fines.filter(f => f.player_id === id)
+
+  const sortedPlayers = [...players].sort((a, b) => {
+    if (sortBy === 'name') return a.name.localeCompare(b.name)
+    const ua = playerFines(a.id).filter(f => !f.is_paid).reduce((s, f) => s + Number(f.amount), 0)
+    const ub = playerFines(b.id).filter(f => !f.is_paid).reduce((s, f) => s + Number(f.amount), 0)
+    return ub - ua
+  })
 
   const savePlayer = async () => {
     if (!playerName.trim()) return
@@ -107,9 +115,14 @@ export default function PlayersPage() {
           <div className="font-bebas text-[26px] tracking-[2px]">Giocatori</div>
           <div className="flex items-center gap-3">
             <MonthFilter value={month} onChange={setMonth} />
+            <div className="flex rounded-lg border border-border overflow-hidden text-[12px]">
+              <button onClick={() => setSortBy('name')} className={`px-3 py-1.5 transition-colors ${sortBy === 'name' ? 'bg-accent text-black font-semibold' : 'text-muted hover:text-white'}`}>A→Z</button>
+              <button onClick={() => setSortBy('amount')} className={`px-3 py-1.5 transition-colors border-l border-border ${sortBy === 'amount' ? 'bg-accent text-black font-semibold' : 'text-muted hover:text-white'}`}>€</button>
+            </div>
             <button onClick={openAddPlayer} className={btnP}>+ Giocatore</button>
           </div>
         </div>
+
         <div className="flex-1 overflow-hidden p-7">
           <div className="grid grid-cols-[280px_1fr] gap-5 h-full">
             <div className="flex flex-col overflow-hidden">
@@ -117,7 +130,7 @@ export default function PlayersPage() {
                 Rosa <span className="text-[12px] font-sans font-normal tracking-normal">— {players.length} giocatori</span>
               </div>
               <div className="flex-1 overflow-y-auto flex flex-col gap-1">
-                {players.map(p => {
+                {sortedPlayers.map(p => {
                   const pf = playerFines(p.id)
                   const unpaid = pf.filter(f => !f.is_paid).reduce((s, f) => s + Number(f.amount), 0)
                   const isSel = selected?.id === p.id
@@ -134,6 +147,7 @@ export default function PlayersPage() {
                 })}
               </div>
             </div>
+
             <div className="flex flex-col overflow-hidden">
               <div className="font-bebas text-[18px] tracking-[2px] text-muted mb-3 flex-shrink-0 flex items-center justify-between">
                 <span>{selected ? selected.name : 'Seleziona un giocatore'}</span>

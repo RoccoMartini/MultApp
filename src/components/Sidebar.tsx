@@ -22,15 +22,10 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const isActive = pathname === item.href
           return (
-            <Link
-              key={item.href}
-              href={item.href}
+            <Link key={item.href} href={item.href}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium mb-0.5 transition-all duration-150 ${
-                isActive
-                  ? 'bg-accent text-black'
-                  : 'text-muted hover:bg-surface2 hover:text-white'
-              }`}
-            >
+                isActive ? 'bg-accent text-black' : 'text-muted hover:bg-surface2 hover:text-white'
+              }`}>
               <span className="w-5 text-center text-base">{item.icon}</span>
               {item.label}
             </Link>
@@ -40,7 +35,7 @@ export default function Sidebar() {
 
       <div className="mx-3 mb-4 bg-surface2 border border-border rounded-lg p-3">
         <div className="text-[10px] text-muted uppercase tracking-[1px]">Stagione</div>
-        <div className="text-[13px] font-semibold mt-0.5">2024 / 2025</div>
+        <div className="text-[13px] font-semibold mt-0.5">2025 / 2026</div>
       </div>
     </aside>
   )
