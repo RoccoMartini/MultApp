@@ -1,23 +1,11 @@
-'use client'
+import type { Metadata } from 'next'
 import './globals.css'
-import { AuthProvider, useAuth } from '@/context/AuthContext'
-import { useRouter, usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { AuthProvider } from '@/context/AuthContext'
+import { AuthGuard } from '@/components/AuthGuard'
 
-function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { role } = useAuth()
-  const router = useRouter()
-  const pathname = usePathname()
-
-  useEffect(() => {
-    if (!role && pathname !== '/login') {
-      router.push('/login')
-    }
-  }, [role, pathname, router])
-
-  if (!role && pathname !== '/login') return null
-
-  return <>{children}</>
+export const metadata: Metadata = {
+  title: 'MultApp',
+  description: 'Gestione multe squadra',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
